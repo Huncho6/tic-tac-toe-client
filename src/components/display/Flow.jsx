@@ -1,45 +1,46 @@
-import React, { useState } from "react";
-import Lobby from "./Lobby";
-import { io } from "socket.io-client";
-import MultiPlayerGame from "./MultiplayerGame";
+// import React, { useState, useEffect } from "react";
+// import io from "socket.io-client";
+// import Lobby from "./Lobby";
+// import MultiPlayerGame from "./MultiplayerGame";
 
-const socket = io("http://localhost:45"); // Initialize socket connection
 
-const Flow = () => {
-  const [isInGame, setIsInGame] = useState(false);
-  const [roomId, setRoomId] = useState(null);
-  const [opponent, setOpponent] = useState(null);
-  const [playerRole, setPlayerRole] = useState(null);
+// const Flow = () => {
+//   const [socket, setSocket] = useState(null);
+//   const [gameStarted, setGameStarted] = useState(false);
+//   const [roomId, setRoomId] = useState(null);
+//   const [opponent, setOpponent] = useState(null);
+//   const [playerRole, setPlayerRole] = useState(null);
 
-  const handleGameStart = (roomId, opponent, role) => {
-    setRoomId(roomId);
-    setOpponent(opponent);
-    setPlayerRole(role);
-    setIsInGame(true);
-  };
+//   useEffect(() => {
+//     const newSocket = io("http://localhost:45"); // Replace with your server URL
+//     setSocket(newSocket);
 
-  const handleGoBack = () => {
-    setIsInGame(false);
-    setRoomId(null);
-    setOpponent(null);
-    setPlayerRole(null);
-  };
+//     return () => {
+//       newSocket.disconnect();
+//     };
+//   }, []);
 
-  return (
-    <div>
-      {isInGame ? (
-        <MultiPlayerGame
-          socket={socket}
-          playerRole={playerRole}
-          roomId={roomId}
-          opponent={opponent}
-          onGoBack={handleGoBack}
-        />
-      ) : (
-        <Lobby socket={socket} onGameStart={handleGameStart} />
-      )}
-    </div>
-  );
-};
+//   const handleGameStart = (roomId, opponent, role) => {
+//     setRoomId(roomId);
+//     setOpponent(opponent);
+//     setPlayerRole(role);
+//     setGameStarted(true);
+//   };
 
-export default Flow;
+//   return socket ? (
+//     gameStarted ? (
+//       <MultiPlayerGame
+//         socket={socket}
+//         playerRole={playerRole}
+//         roomId={roomId}
+//         onGoBack={() => setGameStarted(false)}
+//       />
+//     ) : (
+//       <Lobby socket={socket} onGameStart={handleGameStart} />
+//     )
+//   ) : (
+//     <div>Loading...</div>
+//   );
+// };
+
+// export default Flow;

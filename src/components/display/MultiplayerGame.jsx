@@ -1,119 +1,128 @@
-import React, { useState, useEffect } from "react";
-import Square from "./Square";
+import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
 
-const MultiPlayerGame = ({ socket, playerRole, roomId, onGoBack }) => {
-  const [board, setBoard] = useState(Array(9).fill(null));
-  const [isMyTurn, setIsMyTurn] = useState(playerRole === "X");
-  const [winner, setWinner] = useState(null);
+const socket = io('http://localhost:3000'); // Update with your backend URL
 
-  const handleClick = (index) => {
-    if (board[index] || !isMyTurn || winner) return;
-
-    socket.emit("make-move", { roomId, index, playerRole });
-    setIsMyTurn(false);
-  };
+function Multiplayer () {
+  const [name, setName] = useState('');
+  const [opponentName, setOpponentName] = useState('');
+  const [playerValue, setPlayerValue] = useState('');
+  const [whosTurn, setWhosTurn] = useState("X's Turn");
+  const [loading, setLoading] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [board, setBoard] = useState(Array(9).fill(''));
+  const [roomId, setRoomId] = useState(null);
 
   useEffect(() => {
-    socket.on("update-game", ({ board: updatedBoard, currentPlayer }) => {
-      setBoard(updatedBoard);
-      setIsMyTurn(currentPlayer === playerRole);
+    socket.on('update-game', ({ allPlayers }) => {
+      const foundObject = allPlayers.find(
+        (obj) => obj.p1.p1name === name || obj.p2.p2name === name
+      );
+
+      const newBoard = Array(9).fill('');
+      if (foundObject.p1.p1move !== '') {
+        newBoard[foundObject.p1.p1move] = 'X';
+      }
+      if (foundObject.p2.p2move !== '') {
+        newBoard[foundObject.p2.p2move] = 'O';
+      }
+      setBoard(newBoard);
+
+      if (foundObject.sum % 2 === 0) {
+        setWhosTurn("O's Turn");
+      } else {
+        setWhosTurn("X's Turn");
+      }
     });
 
-    socket.on("invalid-move", ({ message }) => {
+    socket.on('start-game', ({ allPlayers }) => {
+      const foundObject = allPlayers.find(
+        (obj) => obj.p1.p1name === name || obj.p2.p2name === name
+      );
+
+      setRoomId(foundObject.p1.p1name === name ? foundObject.p1.p1name : foundObject.p2.p2name);
+      setPlayerValue(foundObject.p1.p1name === name ? 'X' : 'O');
+      setOpponentName(foundObject.p1.p1name === name ? foundObject.p2.p2name : foundObject.p1.p1name);
+      setGameStarted(true);
+      setLoading(false);
+    });
+
+    socket.on('invalid-move', ({ message }) => {
       alert(message);
     });
 
     return () => {
-      socket.off("update-game");
-      socket.off("invalid-move");
+      socket.off('update-game');
+      socket.off('start-game');
+      socket.off('invalid-move');
     };
-  }, [socket, playerRole]);
+  }, [name]);
 
-  useEffect(() => {
-    const checkWinner = (board) => {
-      const winPatterns = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6],
-      ];
-
-      for (let pattern of winPatterns) {
-        const [a, b, c] = pattern;
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-          return board[a];
-        }
-      }
-      return board.every((cell) => cell !== null) ? "Draw" : null;
-    };
-
-    const result = checkWinner(board);
-    if (result) {
-      setWinner(result);
+  const handleFindPlayer = () => {
+    if (!name) {
+      alert('Please enter a name');
+      return;
     }
-  }, [board]);
+    socket.emit('set-username', name);
+    setLoading(true);
+  };
 
-  const restartGame = () => {
-    setBoard(Array(9).fill(null));
-    setWinner(null);
-    setIsMyTurn(playerRole === "X");
-    socket.emit("restartGame", { roomId });
+  const handleCellClick = (index) => {
+    if (board[index] !== '' || !roomId) return;
+    socket.emit('make-move', { roomId, index, playerRole: playerValue });
   };
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white">
-      {/* Player Info */}
-      <p className="text-xl font-semibold mb-2">
-        {`You are playing as ${playerRole}.`}
-      </p>
-      <p className="text-lg mb-4">
-        {isMyTurn ? "Your turn" : "Waiting for opponent..."}
-      </p>
-
-      {/* Game Board */}
-      <div className="w-[70vmin] h-[70vmin] flex flex-wrap gap-[2vmin] relative">
-        {board.map((value, index) => (
-          <Square
-            key={index}
-            value={value}
-            onClick={() => handleClick(index)}
-            isClickable={isMyTurn && !value && !winner}
-          />
-        ))}
-      </div>
-
-      {/* Restart Button */}
-      <button
-        onClick={restartGame}
-        className="text-lg mt-6 px-4 py-3 rounded-lg bg-black text-white block"
-      >
-        Restart
-      </button>
-
-      {/* Winner/Draw Popup */}
-      {winner && (
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-300 to-red-500 dark:from-gray-700 dark:to-red-600 text-6xl gap-4 z-10"
-        >
-          <p className="text-center text-white">
-            {winner === "Draw" ? "It's a Draw! 😎" : `${winner} Wins! 🎉`}
-          </p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white font-tilt-warp">
+      <h1 className="my-12 text-5xl text-green-600 stroke-black">Tic-Tac-Toe</h1>
+      {!gameStarted ? (
+        <>
+          <div className="flex w-11/12 relative">
+            <p id="userCont">You : <span id="user">{name}</span></p>
+            <p className="absolute right-0" id="oppNameCont">Opponent : <span id="oppName">{opponentName}</span></p>
+          </div>
+          <br />
+          <p id="valueCont">You are playing as <span id="value">{playerValue}</span></p>
+          <br />
+          <p id="whosTurn">{whosTurn}</p>
+          <div>
+            <p className="text-lg" id="enterName">Enter your name : </p>
+            <input
+              type="text"
+              placeholder="Name"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="off"
+              className="mb-5 p-2 text-lg"
+            />
+          </div>
           <button
-            onClick={restartGame}
-            className={`px-6 py-2 text-lg font-semibold uppercase tracking-wider rounded ${
-              isMyTurn ? "bg-gray-800 text-green-300" : "bg-black text-white"
-            }`}
+            id="find"
+            onClick={handleFindPlayer}
+            className="text-lg text-white cursor-pointer p-2 rounded-lg w-64 bg-black"
           >
-            New Game
+            Search for a player
           </button>
+          {loading && <img id="loading" src="loading.gif" alt="Loading" className="w-8" />}
+        </>
+      ) : (
+        <div id="bigcont">
+          <div id="cont" className="grid grid-cols-3 gap-2">
+            {board.map((cell, index) => (
+              <button
+                key={index}
+                className="text-2xl w-24 h-24 cursor-pointer m-0 bg-gray-300 rounded-lg hover:bg-gray-400"
+                onClick={() => handleCellClick(index)}
+              >
+                {cell}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
-};
+}
 
-export default MultiPlayerGame;
+export default Multiplayer;

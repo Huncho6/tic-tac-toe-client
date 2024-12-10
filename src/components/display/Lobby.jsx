@@ -1,62 +1,68 @@
-import React, { useEffect, useState } from "react";
+// import React, { useEffect, useState } from "react";
 
-const Lobby = ({ socket, onGameStart }) => {
-  const [users, setUsers] = useState([]);
-  const [username, setUsername] = useState("");
+// const Lobby = ({ socket, onGameStart }) => {
+//   const [users, setUsers] = useState([]);
+//   const [username, setUsername] = useState("");
 
-  useEffect(() => {
-    const updateUsers = (userList) => {
-      const otherUsers = Object.values(userList).filter((user) => user.id !== socket.id);
-      setUsers(otherUsers);
-    };
+//   useEffect(() => {
+//     if (!socket) return;
 
-    socket.on("update-users", updateUsers);
+//     const updateUsers = (userList) => {
+//       const otherUsers = Object.values(userList).filter((user) => user.id !== socket.id);
+//       setUsers(otherUsers);
+//     };
 
-    socket.on("game-invitation", ({ from, name }) => {
-      const accept = window.confirm(`${name || "A player"} has invited you to play. Accept?`);
-      if (accept) socket.emit("accept-invitation", { to: from });
-    });
+//     socket.on("update-users", updateUsers);
 
-    socket.on("start-game", ({ roomId, opponent, role }) => {
-      onGameStart(roomId, opponent, role);
-    });
+//     socket.on("game-invitation", ({ from, name }) => {
+//       const accept = window.confirm(`${name || "A player"} has invited you to play. Accept?`);
+//       if (accept) socket.emit("accept-invitation", { to: from });
+//     });
 
-    return () => {
-      socket.off("update-users", updateUsers);
-      socket.off("game-invitation");
-      socket.off("start-game");
-    };
-  }, [socket, onGameStart]);
+//     socket.on("start-game", ({ roomId, opponent, role }) => {
+//       onGameStart(roomId, opponent, role);
+//     });
 
-  const handleSetUsername = () => {
-    if (username.trim()) socket.emit("set-username", username);
-  };
+//     return () => {
+//       socket.off("update-users", updateUsers);
+//       socket.off("game-invitation");
+//       socket.off("start-game");
+//     };
+//   }, [socket, onGameStart]);
 
-  const handleInvite = (userId) => {
-    socket.emit("invite-player", { to: userId });
-  };
+//   const handleSetUsername = () => {
+//     if (username.trim()) socket.emit("set-username", username);
+//   };
 
-  return (
-    <div>
-      <h1>Lobby</h1>
-      <input
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Enter your name"
-      />
-      <button onClick={handleSetUsername}>Set Username</button>
+//   const handleInvite = (userId) => {
+//     socket.emit("invite-player", { to: userId });
+//   };
 
-      <h2>Available Players</h2>
-      <ul>
-        {users.map((user) => (
-          <li key={user.id}>
-            {user.name || "Unnamed Player"} <button onClick={() => handleInvite(user.id)}>Invite</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
+//   if (!socket) {
+//     return <div>Loading socket connection...</div>;
+//   }
 
-export default Lobby;
+//   return (
+//     <div>
+//       <h1>Lobby</h1>
+//       <input
+//         type="text"
+//         value={username}
+//         onChange={(e) => setUsername(e.target.value)}
+//         placeholder="Enter your name"
+//       />
+//       <button onClick={handleSetUsername}>Set Username</button>
+
+//       <h2>Available Players</h2>
+//       <ul>
+//         {users.map((user) => (
+//           <li key={user.id}>
+//             {user.name || "Unnamed Player"} <button onClick={() => handleInvite(user.id)}>Invite</button>
+//           </li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// };
+
+// export default Lobby;

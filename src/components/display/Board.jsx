@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { IoPeopleSharp, IoPersonSharp } from "react-icons/io5";
 import BotGame from "./BotGame";
-import Flow from "./Flow";
+import Multiplayer from "./MultiplayerGame";
 
 const Home = () => {
   const [gameMode, setGameMode] = useState(null);
@@ -132,7 +132,7 @@ const Home = () => {
               setShowDifficultyModal={setShowDifficultyModal}
             />
           ) : (
-            <Flow />
+            <Multiplayer />
           )}
         </>
       )}
